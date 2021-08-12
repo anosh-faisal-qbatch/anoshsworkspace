@@ -4,10 +4,6 @@ const sequelize = require("../databaseConnection");
 const Comments = sequelize.define(
   "comments",
   {
-    post_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -29,6 +25,7 @@ const Comments = sequelize.define(
       type: Sequelize.STRING,
       allowNull: false,
     },
+  
   },
   {
     underscored: true,

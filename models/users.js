@@ -1,8 +1,8 @@
 const Sequelize = require("sequelize");
 const sequelize = require("../databaseConnection");
 
-const UserTable = sequelize.define(
-  "userTable",
+const Users = sequelize.define(
+  "users",
   {
     id: {
       type: Sequelize.INTEGER,
@@ -52,4 +52,4 @@ const UserTable = sequelize.define(
   }
 );
 
-module.exports = UserTable;
+module.exports = Users;

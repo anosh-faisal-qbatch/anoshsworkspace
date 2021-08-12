@@ -1,17 +1,22 @@
 const { compact, get } = require("lodash");
+const { Op, literal } = require("sequelize");
 const Albums = require("./models/albums");
-const PostsData = require("./models/posts");
+const Posts = require("./models/posts");
 const Photos = require("./models/photos");
 const Comments = require("./models/comments");
+require("./models/index");
 const ToDo = require("./models/todo");
-const Users = require("./models/userTable");
-
+const Users = require("./models/users");
 const _ = require("lodash");
 const fetch = require("node-fetch");
 const prompt = require("prompt-sync")();
 
 const { stdin: input, stdout: output } = process;
 const { createInterface } = require("readline");
+const UserTable = require("./models/users");
+const { runInNewContext } = require("vm");
+const { title } = require("process");
+const PostsData = require("./models/posts");
 const takeInput = (prompt) => {
   const rl = createInterface({ input, output });
   return new Promise((resolve) => {
@@ -23,91 +28,26 @@ const takeInput = (prompt) => {
 };
 
 //find posts of specific user
-async function getDataPostUser() {
-  var p1 = fetch("https://jsonplaceholder.typicode.com/users").then(
-    (response) => (comments = response.json())
-  );
-  var p2 = fetch("https://jsonplaceholder.typicode.com/posts").then(
-    (response) => {
-      return response.json();
-    },
-    100
-  );
-
-  const rows = await Promise.all([p1, p2]);
-  let userName = await takeInput("Enter name to get required user post : ");
-
-  const filterUser = _.filter(rows[0], function (o) {
-    return o.name == userName;
-  });
-  const mappedValue = _.map(filterUser, function (x) {
-    return x.id;
-  });
-  const filterAllPost = _.filter(rows[1], function (o) {
-    return o.userId == mappedValue;
-  });
-
-  //Database Work
-  const arrobj = filterAllPost.map(function (i) {
-    return { user_table_id: i.userId, id: i.id, title: i.title, body: i.body };
-  });
-
-  await PostsData.bulkCreate(arrobj);
-
-  const result = await PostsData.findAll({ where: { id: mappedValue } });
-  console.log(result);
-  // console.log(result);
-  //const arr2 = PostsData.findAll({ group: "id" });
-  //console.log(arrobj);
-
-  // console.log(arr2);
-}
-//find titles albums with specific street of user:'
-
-async function getDataByStreet() {
+async function getDataOfAll() {
   var p1 = fetch("https://jsonplaceholder.typicode.com/users").then(
     (response) => (comments = response.json())
   );
 
-  var p2 = fetch("https://jsonplaceholder.typicode.com/albums").then(
+  var p2 = fetch("https://jsonplaceholder.typicode.com/todos").then(
     (response) => {
       return response.json();
     },
     100
   );
-
-  const rows = await Promise.all([p1, p2]);
-
-  let n = await takeInput("Enter Street to get required data: ");
-  const filterStreetData = _.filter(rows[0], function (o) {
-    return o.address.street == n;
-  });
-  const mappedArray = _.map(filterStreetData, function (x) {
-    return x.id;
-  });
-  const filterAlbumsData = _.filter(rows[1], function (o2) {
-    return o2.id == mappedArray;
-  });
-  console.log(filterAlbumsData);
-  //Database Work
-  await Albums.create({
-    user_id: filterAlbumsData[0].userId,
-    id: filterAlbumsData[0].id,
-    title: filterAlbumsData[0].title,
-  });
-}
-
-//find top 10 thumbnails specific zipcode of user
-
-async function getZipCodeData() {
-  var p3 = fetch("https://jsonplaceholder.typicode.com/users").then(
+  var p3 = fetch("https://jsonplaceholder.typicode.com/albums").then(
     (response) => {
       return response.json();
     },
+
     100
   );
 
-  var p4 = fetch("https://jsonplaceholder.typicode.com/albums").then(
+  var p4 = fetch("https://jsonplaceholder.typicode.com/posts").then(
     (response) => {
       return response.json();
     },
@@ -120,64 +60,111 @@ async function getZipCodeData() {
     },
     100
   );
-  const rows2 = await Promise.all([p3, p4, p5]);
-  let n = await takeInput("Enter ZipCode to get required data ");
-  const filterZipCodeData = _.filter(rows2[0], function (o) {
-    return o.address.zipcode == n;
-  });
-  const getId = _.map(filterZipCodeData, function (x) {
-    return x.id;
-  });
-  const filterAlbumsData = _.filter(rows2[1], function (o2) {
-    return o2.userId == getId;
-  });
-  const getThumbNail = _.filter(rows2[2], function (x) {
-    return x.albumId == getId;
-  });
-  const size = 10;
-  const printFinalResult = getThumbNail.slice(0, size); //slice to get top 10 users data
-  //Database Work
+  var p6 = fetch("https://jsonplaceholder.typicode.com/comments").then(
+    (response) => {
+      return response.json();
+    },
+    100
+  );
 
-  const arr = printFinalResult.map(function (n) {
+  const rows = await Promise.all([p1, p2, p3, p4, p5, p6]);
+  //sending data of users to databse
+  const arrobj1 = rows[0].map(function (i) {
     return {
-      album_id: n.albumId,
-      id: n.id,
-      title: n.title,
-      url: n.url,
-      thumbnail_url: n.thumbnailUrl,
+      name: i.name,
+      user_name: i.username,
+      email: i.email,
+      address: i.address,
+      phone: i.phone,
+      website: i.website,
+
+      company: i.company,
+    };
+  });
+  await Users.bulkCreate(arrobj1);
+
+  //sending data of todos to database
+
+  const arrobj = rows[1].map(function (i) {
+    return { title: i.title, completed: i.completed, user_id: i.userId };
+  });
+
+  await ToDo.bulkCreate(arrobj);
+
+  //sending data of albums to database
+  const arrobj3 = rows[2].map(function (i) {
+    return { title: i.title, user_id: i.userId };
+  });
+
+  await Albums.bulkCreate(arrobj3);
+
+  //sending posts data to databse
+  const arrobj4 = rows[3].map(function (i) {
+    return { title: i.title, body: i.body, user_id: i.userId };
+  });
+
+  await Posts.bulkCreate(arrobj4);
+
+  //sending photos data to database
+  const arrobj5 = rows[4].map(function (i) {
+    return {
+      title: i.title,
+      url: i.url,
+      thumbnail_url: i.thumbnailUrl,
+      album_title_id: i.albumId,
+    };
+  });
+  await Photos.bulkCreate(arrobj5);
+
+  //sending comments data to database
+
+  /*const arrobj6 = rows[5].map(function (i) {
+    return {
+      name: i.name,
+      email: i.email,
+      body: i.body,
+      posts_datum_id: i.postId,
     };
   });
 
-  Photos.bulkCreate(arr);
-  console.log(arr);
+  await Comments.bulkCreate(arrobj6); */
+
+  /*const result = await PostsData.findAll({ where: { id: mappedValue } });
+  // console.log(result); 
+  console.log(result);
+  //const arr2 = PostsData.findAll({ group: "id" });
+  console.log(arrobj);*/
 }
 
-async function choiceFunction() {
-  console.log("Enter  1 to get post of specific user ");
-  console.log("Enter 2 to get titles albums with specific street of user");
-  console.log("Enter 3 to get top 10 thumbnails specific zipcode of user  ");
+async function fetchPostDataFromDb() {
+  /* const us = await Users.findAll({
+    where: { id: 1 },
+  });
+  // console.log(JSON.stringify(us, null, 2)); */
 
-  while (true) {
-    let selectFrom = await takeInput("Enter your choice: ");
-    selectFrom = Number(selectFrom);
-    if (selectFrom == 0) {
-      break;
-    }
-    switch (selectFrom) {
-      case 1:
-        await getDataPostUser();
-        break;
+  const postdata = await Posts.findAll({
+    include: [
+      {
+        model: Users,
+        where: { name: "Clementine Bauch" },
+        right: true,
+      },
+    ],
+  });
 
-      case 2:
-        await getDataByStreet();
-        break;
-      case 3:
-        await getZipCodeData();
-        break;
-      default:
-        console.log("Invalid Input !!!");
-    }
-  }
+  // console.log(JSON.stringify(postdata, null, 2));
 }
 
-choiceFunction();
+async function getDataByZipCode() {
+  const userdata = await Users.findAll({
+    attributes: ["address"],
+    where: literal("JSON_EXTRACT(address, '$.zipcode') = '92998-3874'"),
+  });
+
+  console.log(JSON.stringify(userdata, null, 2));
+}
+//getDataOfAll();
+
+getDataByZipCode();
+
+//fetchPostDataFromDb();

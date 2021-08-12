@@ -2,13 +2,8 @@ const Sequelize = require("sequelize");
 const sequelize = require("../databaseConnection");
 
 const PostsData = sequelize.define(
-  "posts_data",
+  "posts",
   {
-    user_table_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -24,6 +19,10 @@ const PostsData = sequelize.define(
     body: {
       type: Sequelize.STRING,
       allowNull: false,
+    },
+
+    user_id: {
+      type: Sequelize.INTEGER,
     },
   },
   {

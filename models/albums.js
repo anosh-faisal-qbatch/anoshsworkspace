@@ -4,11 +4,6 @@ const sequelize = require("../databaseConnection");
 const AlbumTitles = sequelize.define(
   "albumTitle",
   {
-    user_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -19,6 +14,9 @@ const AlbumTitles = sequelize.define(
     title: {
       type: Sequelize.STRING,
       allowNull: false,
+    },
+    user_id: {
+      type: Sequelize.INTEGER,
     },
   },
   {

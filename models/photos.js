@@ -4,10 +4,6 @@ const sequelize = require("../databaseConnection");
 const Photos = sequelize.define(
   "photos",
   {
-    album_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -28,6 +24,9 @@ const Photos = sequelize.define(
     thumbnail_url: {
       type: Sequelize.STRING,
       allowNull: false,
+    },
+    album_title_id: {
+      type: Sequelize.INTEGER,
     },
   },
   {

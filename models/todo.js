@@ -4,11 +4,6 @@ const sequelize = require("../databaseConnection");
 const ToDo = sequelize.define(
   "toDo",
   {
-    user_id: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-    },
-
     id: {
       type: Sequelize.INTEGER,
       autoIncrement: true,
@@ -23,6 +18,9 @@ const ToDo = sequelize.define(
     completed: {
       type: Sequelize.BOOLEAN,
       allowNull: false,
+    },
+    user_id: {
+      type: Sequelize.INTEGER,
     },
   },
   {
